@@ -69,7 +69,6 @@ public class OpportunityStageTriggerHandler {
        //updateDeviceOrderItems(newOpps);
     }
 
-    //ПЕРЕРОБИТИ
     private static void createContract(List<SObject> newOpps) {
         System.debug('Contract creation process started');
         
@@ -126,43 +125,50 @@ public class OpportunityStageTriggerHandler {
     private static void updateDeviceOrderItems(List<SObject> newOpps) {
         Id soldRecordTypeId = Schema.SObjectType.Device__c.getRecordTypeInfosByDeveloperName().get('Sold').getRecordTypeId();
     
-        List<Opportunity> newCastedOpps = (List<Opportunity>)newOpps;
-        
-        Set<Id> newOppIds = new Set<Id>();
-        for (Opportunity opp : newCastedOpps){
-            newOppIds.add(opp.AccountId); 
-        }
+         List<Opportunity> newCastedOpps = (List<Opportunity>)newOpps;
+    
+    Set<Id> newOppIds = new Set<Id>();
+    for (Opportunity opp : newCastedOpps){
+        newOppIds.add(opp.Id); 
+    }  
+    
+    Set<Id> newOppAccIds = new Set<Id>();
+    for (Opportunity opp : newCastedOpps){
+        newOppAccIds.add(opp.AccountId); 
+    }
 
-        List<Account> account = [SELECT Id, ShippingStreet, ShippingCity, ShippingPostalCode 
+    Account account = [
+        SELECT Id, Region__c, ShippingCity, ShippingPostalCode, ShippingStreet, ShippingCountry
         FROM Account 
-        WHERE Id IN :newOppIds
+        WHERE Id IN :newOppAccIds
         ];
 
-        List<Device__c> devices = [
-            SELECT Id, Status__c, Devices_Contract__c, 	Address_to_Deliver__c 
-            FROM Device__c 
-            WHERE Account__c IN :newOppIds
-        ];
-        
-        Devices_Contract__c contract = [
-            SELECT Id 
-            FROM Devices_Contract__c 
-            WHERE Account__c IN :newOppIds
-        ];
+    Map<Id, Devices_Contract__c> contractsMap = new Map<Id, Devices_Contract__c>();
+    for (Devices_Contract__c contract : [
+        SELECT Id, (SELECT Id, Account__c, Address_to_Deliver__c, Status__c, RecordTypeId FROM Device__r)
+        FROM Devices_Contract__c 
+        WHERE Opportunity__c IN :newOppIds
+    ]) {
+        contractsMap.put(contract.Account__c, contract);
+    }
 
-        for (Opportunity opp : newCastedOpps){
-            for (Device__c item : devices) {
-                item.RecordTypeId = soldRecordTypeId; 
-                item.Status__c = 'Sold'; 
+    //map should be here
+    
+    for (Device__c device : devices) {
+        for (Opportunity opp : newCastedOpps) {
+                device.Account__c = opp.AccountId;
+                device.RecordTypeId = soldRecordTypeId; 
+                device.Status__c = 'Sold'; 
                 
-                item.Account__c = opp.AccountId; 
-                item.Devices_Contract__c =  contract.Id; 
-        
-                    item.Address_to_Deliver__Street__s = opp.Account.ShippingStreet; 
-                    item.Address_to_Deliver__City__s = opp.Account.ShippingCity; 
-                    item.Address_to_Deliver__PostalCode__s = opp.Account.ShippingPostalCode; 
-            }
+                if (contractsMap.containsKey(opp.AccountId)) {
+                    device.Devices_Contract__c = contractsMap.get(opp.AccountId).Id; 
+                }
+                
+                device.Address_to_Deliver__Street__s = opp.Account.ShippingStreet; 
+                device.Address_to_Deliver__City__s = opp.Account.ShippingCity; 
+                device.Address_to_Deliver__PostalCode__s = opp.Account.ShippingPostalCode; 
         }
+    }
     
         if (!devices.isEmpty()) {
             try {
@@ -175,4 +181,4 @@ public class OpportunityStageTriggerHandler {
             System.debug('No Device Order Items found for update.');
         }
     }
-}
+
