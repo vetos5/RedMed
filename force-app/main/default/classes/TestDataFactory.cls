@@ -4,7 +4,10 @@ public class TestDataFactory {
         Account acc = new Account(
         RecordTypeId = '012d2000000r7jJAAQ',       
         Name = name,
-        Region__c = 'EMEA');
+        Region__c = 'EMEA',
+        ShippingStreet = '10 Downing Street',
+        ShippingCity = 'London',
+        ShippingPostalCode = 'SW1A 1AA');
 
         System.debug('Account Record Type ID: ' + acc.RecordTypeId);
 
@@ -12,7 +15,6 @@ public class TestDataFactory {
             insert acc;
         }
         return acc;
-        
     }
 
     public static Opportunity createOpportunityTest(Account acc, String stageName, Boolean isInsert) {

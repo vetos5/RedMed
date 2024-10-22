@@ -118,8 +118,24 @@ private class OpportunityStageTriggerHandlerTest {
             System.assertNotEquals(null, contract.Sold_Date_Time__c, 'Sold Date Time should not be null');
         }
     }
+
+    //in dev
+    @isTest
+    static void testUpdateDeviceOrderItems() {
+
+        List<Device__c> updatedDevices = [
+            SELECT Id, Account__c, Status__c, RecordTypeId, Address_to_Deliver__Street__s, Address_to_Deliver__City__s, Address_to_Deliver__PostalCode__s
+            FROM Device__c
+            WHERE Account__c = :potentialAccount.Id];
+
+        Id soldRecordTypeId = Schema.SObjectType.Device__c.getRecordTypeInfosByDeveloperName().get('Sold').getRecordTypeId();
+
+        for (Device__c device : updatedDevices) {
+        System.assertEquals(potentialAccount.Id, device.Account__c, 'Account should be updated.');
+        System.assertEquals('Sold', device.Status__c, 'Device status should be set to Sold.');
+        System.assertEquals(potentialAccount.ShippingStreet, device.Address_to_Deliver__Street__s, 'Street address should match.');
+        System.assertEquals(potentialAccount.ShippingCity, device.Address_to_Deliver__City__s, 'City should match.');
+        System.assertEquals(potentialAccount.ShippingPostalCode, device.Address_to_Deliver__PostalCode__s, 'Postal code should match.');}
+    }
 }
-
-
-
 
