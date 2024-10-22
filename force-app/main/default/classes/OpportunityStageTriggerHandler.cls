@@ -149,6 +149,7 @@ public class OpportunityStageTriggerHandler {
             FROM Sales_Order__c
             WHERE Opportunity__c IN :newOpps
         ];
+        System.debug('Sales Orders: ' + salesOrders);
         
         List<Sales_Order_Item__c> orderItems = [
             SELECT Id, Sales_Order__c, Device__c
@@ -157,12 +158,16 @@ public class OpportunityStageTriggerHandler {
             AND Device__c != null 
         ];
 
+        System.debug('Order Items: ' + orderItems);
 
         Set<Id> deviceIds = new Set<Id>();
         for (Sales_Order_Item__c orderItem : orderItems) {
             deviceIds.add(orderItem.Device__c);
         }
         
+        System.debug('Device IDs: ' + deviceIds);
+
+
         Map<Id, Devices_Contract__c> salesOrderToContractMap = new Map<Id, Devices_Contract__c>([
             SELECT Id, Sales_Order__c, Opportunity__c, Account__c,
             Account__r.ShippingStreet, Account__r.ShippingCity, Account__r.ShippingPostalCode
@@ -170,18 +175,22 @@ public class OpportunityStageTriggerHandler {
             WHERE Sales_Order__c IN :salesOrders]
         );
         
+        System.debug('Sales Order to Contract Map: ' + salesOrderToContractMap);
+
         List<Device__c> devicesToUpdate = [
             SELECT Id, Devices_Contract__c, Account__c, Status__c, RecordTypeId, Address_to_Deliver__c
             FROM Device__c
             WHERE Id IN :deviceIds
         ];
         
+        System.debug('Devices to Update: ' + devicesToUpdate);
         
         for (Sales_Order_Item__c orderItem : orderItems) {
             Devices_Contract__c contractDevice = salesOrderToContractMap.get(orderItem.Sales_Order__c);
             
             if (contractDevice != null && orderItem.Device__c != null) {
                
+                System.debug('IN IF contract != null');
                 for (Device__c device : devicesToUpdate) {
                     if (device.Id == orderItem.Device__c) {
                         device.Devices_Contract__c = contractDevice.Id;
@@ -196,6 +205,7 @@ public class OpportunityStageTriggerHandler {
             }  
         }
 
+        System.debug('Devices to Update: ' + devicesToUpdate);
         if (!devicesToUpdate.isEmpty()) { 
             try {
                 update devicesToUpdate;
