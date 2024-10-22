@@ -147,7 +147,7 @@ public class OpportunityStageTriggerHandler {
         List<Sales_Order__c> salesOrders = [
             SELECT Id
             FROM Sales_Order__c
-            WHERE Opportunity__c IN :opportunities
+            WHERE Opportunity__c IN :newOpps
         ];
         
         List<Sales_Order_Item__c> orderItems = [
@@ -156,35 +156,41 @@ public class OpportunityStageTriggerHandler {
             WHERE Sales_Order__c IN :salesOrders
             AND Device__c != null 
         ];
+
+
+        Set<Id> deviceIds = new Set<Id>();
+        for (Sales_Order_Item__c orderItem : orderItems) {
+            deviceIds.add(orderItem.Device__c);
+        }
         
-        Map<Id, Device_Contract__c> salesOrderToContractMap = new Map<Id, Device_Contract__c>([
+        Map<Id, Devices_Contract__c> salesOrderToContractMap = new Map<Id, Devices_Contract__c>([
             SELECT Id, Sales_Order__c, Opportunity__c, Account__c,
             Account__r.ShippingStreet, Account__r.ShippingCity, Account__r.ShippingPostalCode
-            FROM Device_Contract__c 
+            FROM Devices_Contract__c 
             WHERE Sales_Order__c IN :salesOrders]
         );
         
         List<Device__c> devicesToUpdate = [
-            SELECT Id, Device_Contract__c, Account__c, Status__c, RecordTypeId, Address_to_Deliver__c
+            SELECT Id, Devices_Contract__c, Account__c, Status__c, RecordTypeId, Address_to_Deliver__c
             FROM Device__c
-            WHERE Id IN :orderItems
-            ];
+            WHERE Id IN :deviceIds
+        ];
         
         
         for (Sales_Order_Item__c orderItem : orderItems) {
-            Device_Contract__c contractDevice = salesOrderToContractMap.get(orderItem.Sales_Order__c);
+            Devices_Contract__c contractDevice = salesOrderToContractMap.get(orderItem.Sales_Order__c);
             
             if (contractDevice != null && orderItem.Device__c != null) {
                
                 for (Device__c device : devicesToUpdate) {
                     if (device.Id == orderItem.Device__c) {
-                        device.Device_Contract__c = contractDevice.Id;
+                        device.Devices_Contract__c = contractDevice.Id;
                         device.Account__c = contractDevice.Account__c;
                         device.Status__c = 'Sold';
                         device.RecordTypeId = soldRecordTypeId;
-                        device.Address_to_Deliver__Street__s = contractDevice.Account__c.ShippingStreet;
-                        device.Address_to_Deliver__City__s = contractDevice.Account__c.ShippingCity;
-                        device.Address_to_Deliver__PostalCode__s = contractDevice.Account__c.ShippingPostalCode;
+                        device.Address_to_Deliver__Street__s = contractDevice.Account__r.ShippingStreet;
+                        device.Address_to_Deliver__City__s = contractDevice.Account__r.ShippingCity;
+                        device.Address_to_Deliver__PostalCode__s = contractDevice.Account__r.ShippingPostalCode;
                     }
                 }
             }  
@@ -193,7 +199,7 @@ public class OpportunityStageTriggerHandler {
         if (!devicesToUpdate.isEmpty()) { 
             try {
                 update devicesToUpdate;
-                System.debug('Updated Device Order Items: ' + devices);
+                System.debug('Updated Device Order Items: ' + devicesToUpdate);
             } catch (DmlException e) {
             System.debug('Error updating Device Order Items: ' + e.getMessage());
             }

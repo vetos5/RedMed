@@ -123,19 +123,47 @@ private class OpportunityStageTriggerHandlerTest {
     @isTest
     static void testUpdateDeviceOrderItems() {
 
+        Account acc = [
+            SELECT Id, RecordTypeId, ShippingStreet, ShippingCity, ShippingPostalCode 
+            FROM Account 
+            LIMIT 1
+        ];
+
+        List <Opportunity> oppsToUpdate = [
+            SELECT Id, StageName 
+            FROM Opportunity 
+            WHERE StageName = 'Prospecting'];
+
+        for (Opportunity opp : oppsToUpdate) {
+            opp.StageName = 'Negotiation/Review';
+        }
+        update oppsToUpdate;
+
+        List <Opportunity> oppsToUpdate2 = [
+            SELECT Id, StageName 
+            FROM Opportunity 
+            WHERE StageName = 'Negotiation/Review'];
+
+        for (Opportunity opp : oppsToUpdate2) {
+            opp.StageName = 'Closed Won';
+        }
+        update oppsToUpdate2;
+
+        System.debug('DEBUG ACCS: ' + acc);
+        
         List<Device__c> updatedDevices = [
             SELECT Id, Account__c, Status__c, RecordTypeId, Address_to_Deliver__Street__s, Address_to_Deliver__City__s, Address_to_Deliver__PostalCode__s
             FROM Device__c
-            WHERE Account__c = :potentialAccount.Id];
+            WHERE Account__c = :acc.Id];
 
         Id soldRecordTypeId = Schema.SObjectType.Device__c.getRecordTypeInfosByDeveloperName().get('Sold').getRecordTypeId();
 
         for (Device__c device : updatedDevices) {
-        System.assertEquals(potentialAccount.Id, device.Account__c, 'Account should be updated.');
+        System.assertEquals(acc.Id, device.Account__c, 'Account should be updated.');
         System.assertEquals('Sold', device.Status__c, 'Device status should be set to Sold.');
-        System.assertEquals(potentialAccount.ShippingStreet, device.Address_to_Deliver__Street__s, 'Street address should match.');
-        System.assertEquals(potentialAccount.ShippingCity, device.Address_to_Deliver__City__s, 'City should match.');
-        System.assertEquals(potentialAccount.ShippingPostalCode, device.Address_to_Deliver__PostalCode__s, 'Postal code should match.');}
+        System.assertEquals(acc.ShippingStreet, device.Address_to_Deliver__Street__s, 'Street address should match.');
+        System.assertEquals(acc.ShippingCity, device.Address_to_Deliver__City__s, 'City should match.');
+        System.assertEquals(acc.ShippingPostalCode, device.Address_to_Deliver__PostalCode__s, 'Postal code should match.');}
     }
 }
 
