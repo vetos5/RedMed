@@ -21,16 +21,9 @@ private class OpportunityStageTriggerHandlerTest {
         }
         insert orders;
 
-        List<Devices_Contract__c> contracts = new List<Devices_Contract__c>();
-        for (Opportunity opp : opps) {
-            Devices_Contract__c contract = TestDataFactory.createContractTest(potentialAccount, false);
-            contracts.add(contract);
-        }
-        insert contracts;
-
         List<Device__c> devices = new List<Device__c>();
         for (Opportunity opp : opps) {
-            Device__c device = TestDataFactory.createDeviceTest(orders[0], potentialAccount, contracts[0]);
+            Device__c device = TestDataFactory.createDeviceTest(orders[0], potentialAccount);
             devices.add(device);
         }
         insert devices;
@@ -113,7 +106,7 @@ private class OpportunityStageTriggerHandlerTest {
             FROM Devices_Contract__c
             WHERE Opportunity__c IN :oppsForContract];
 
-        System.assertEquals(10, contracts.size(), '10 contracts should be created');
+        System.assertEquals(200, contracts.size(), '200 contracts should be created');
 
         for (Devices_Contract__c contract : contracts) {
             System.assertNotEquals(null, contract.Account__c, 'Account should not be null');
@@ -126,5 +119,7 @@ private class OpportunityStageTriggerHandlerTest {
         }
     }
 }
+
+
 
 

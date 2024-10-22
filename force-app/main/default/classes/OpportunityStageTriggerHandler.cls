@@ -36,7 +36,7 @@ public class OpportunityStageTriggerHandler {
                 accountIdsToUpdate.add(opp.AccountId);
             }
         }
-    }
+        }
 
         if (!accountIdsToUpdate.isEmpty()) {
             try {
@@ -70,12 +70,9 @@ public class OpportunityStageTriggerHandler {
         
         System.debug('Creating Contracts');
         createContracts(newOpps);
-
-        // updateDeviceOrderItems(newOpps); // Commented out to avoid redundancy
-        //createContracts(newOpps);
     }
     
-    public static void createContracts(List<SObject> newOpps) {
+    private static void createContracts(List<SObject> newOpps) {
         System.debug('Contract creation process started');
         
         List<Opportunity> newCastedOpps = (List<Opportunity>)newOpps;
@@ -107,13 +104,9 @@ public class OpportunityStageTriggerHandler {
         
         List<Devices_Contract__c> contractsToInsert = new List<Devices_Contract__c>();
         
-        Set<Id> createdOppIds = new Set<Id>();
-
         for (Opportunity opp : newCastedOpps) {
-              if (createdOppIds.contains(opp.Id)) {
-            continue; 
-        }
-            Devices_Contract__c newContract = new Devices_Contract__c();
+            if (opp.StageName == 'Closed Won'){
+                Devices_Contract__c newContract = new Devices_Contract__c();
             
             newContract.Account__c = opp.AccountId;
             newContract.Region__c = accounts.get(opp.AccountId).Region__c;
@@ -135,7 +128,8 @@ public class OpportunityStageTriggerHandler {
             newContract.Sold_Date_Time__c = System.now();
             
             contractsToInsert.add(newContract);
-            createdOppIds.add(opp.Id);
+        }
+            
         }
         
         try {
@@ -146,5 +140,94 @@ public class OpportunityStageTriggerHandler {
         }
     }
     
-    
+    //in dev
+    private static void updateDeviceOrderItems(List<SObject> newOpps) {
+        Id soldRecordTypeId = Schema.SObjectType.Device__c.getRecordTypeInfosByDeveloperName().get('Sold').getRecordTypeId();
+        
+        List<Opportunity> newCastedOpps = (List<Opportunity>)newOpps;
+        
+        Set<Id> newOppIds = new Set<Id>();
+        for (Opportunity opp : newCastedOpps){
+            newOppIds.add(opp.Id);
+        }
+        
+        Set<Id> newOppAccIds = new Set<Id>();
+        for (Opportunity opp : newCastedOpps){
+            newOppAccIds.add(opp.AccountId);
+        }
+        
+        Account account = [
+            SELECT Id, Region__c, ShippingCity, ShippingPostalCode, ShippingStreet, ShippingCountry
+            FROM Account
+            WHERE Id IN :newOppAccIds
+        ];
+        
+        Map<Id, Devices_Contract__c> contractsMap = new Map<Id, Devices_Contract__c>();
+
+        for (Devices_Contract__c contract : [
+            SELECT Id, (SELECT Id, Account__c, Address_to_Deliver__c, Status__c, RecordTypeId FROM Devices__r)
+            FROM Devices_Contract__c
+            WHERE Opportunity__c IN :newOppIds
+            ]) {
+
+            contractsMap.put(contract.Account__c, contract);
+        }
+        
+        Map<Id, List<Device__c>> devicesMap = new Map<Id, List<Device__c>>();
+        
+        List<Device__c> devices = [
+            SELECT Id, Account__c, Address_to_Deliver__c, Status__c
+            FROM Device__c
+            WHERE Devices_Contract__c IN :contractsMap.keySet()
+            ];
+        
+        for (Device__c device : devices) {
+            if (!devicesMap.containsKey(device.)) {
+                devicesMap.put(device.Opportunity__c, new List<Device__c>());
+            }
+            devicesMap.get(device.Opportunity__c).add(device);
+        }
+        
+        List<Device__c> devicesToUpdate = new List<Device__c>();
+        
+        for (Id opportunityId : devicesMap.keySet()) {
+            List<Device__c> associatedDevices = devicesMap.get(opportunityId);
+        
+            System.debug('Opportunity ID: ' + opportunityId);
+            for (Device__c device : associatedDevices) {
+                System.debug(' Device ID: ' + device.Id + ', Status: ' + device.Status__c);
+            }
+            for (Id opportunityId : devicesMap.keySet()) {
+                List<Device__c> devices = devicesMap.get(opportunityId);
+                Opportunity opp = oppMap.get(opportunityId);
+        
+                for (Device__c device : devices) {
+                if (opp != null) {
+                device.Account__c = opp.AccountId;
+                device.RecordTypeId = soldRecordTypeId;
+                device.Status__c = 'Sold';
+        
+                if (contractsMap.containsKey(opp.AccountId)) {
+                    device.Devices_Contract__c = contractsMap.get(opp.AccountId).Id;
+                }
+        
+                device.Address_to_Deliver__Street__s = opp.Account.ShippingStreet;
+                device.Address_to_Deliver__City__s = opp.Account.ShippingCity;
+                device.Address_to_Deliver__PostalCode__s = opp.Account.ShippingPostalCode;
+                }
+            }
+        }
+        
+        if (!devices.isEmpty()) {
+            try {
+                update devices;
+                System.debug('Updated Device Order Items: ' + devices);
+            } catch (DmlException e) {
+            System.debug('Error updating Device Order Items: ' + e.getMessage());
+            }
+        } else {
+            System.debug('No Device Order Items found for update.');
+            }
+        }
+    } 
 }

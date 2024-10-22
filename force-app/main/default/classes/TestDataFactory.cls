@@ -70,11 +70,10 @@ public class TestDataFactory {
         
     }
 
-    public static Device__c createDeviceTest(Sales_Order__c order, Account acc, Devices_Contract__c contract) {
+    public static Device__c createDeviceTest(Sales_Order__c order, Account acc) {
         Device__c device = new Device__c(
             Status__c = 'In stock',
             Account__c = acc.Id,
-            Devices_Contract__c = contract.Id,
             Name__c = 'Test1'
         );
 
