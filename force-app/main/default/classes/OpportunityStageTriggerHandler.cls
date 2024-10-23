@@ -8,6 +8,8 @@ public class OpportunityStageTriggerHandler {
                 Trigger.new,
                 Trigger.oldMap
             );
+            createContracts(Trigger.new);
+            updateDeviceOrderItems(Trigger.new);
         }
         else{
             System.debug('Trigger not supported.');
@@ -68,9 +70,8 @@ public class OpportunityStageTriggerHandler {
             System.debug('No account IDs to update.');
         }
         
-        System.debug('Creating Contracts');
-        createContracts(newOpps);
-        updateDeviceOrderItems(newOpps);
+       
+        //updateDeviceOrderItems(newOpps);
     }
     
     private static void createContracts(List<SObject> newOpps) {
@@ -105,6 +106,10 @@ public class OpportunityStageTriggerHandler {
         
         List<Devices_Contract__c> contractsToInsert = new List<Devices_Contract__c>();
         
+       
+        List<Sales_Order__c> ordersToUpdate = new List<Sales_Order__c>();
+
+        Map<Sales_Order__c, Devices_Contract__c> salesOrderToContractMap = new Map<Sales_Order__c, Devices_Contract__c>();
         for (Opportunity opp : newCastedOpps) {
             if (opp.StageName == 'Closed Won'){
                 Devices_Contract__c newContract = new Devices_Contract__c();
@@ -113,7 +118,8 @@ public class OpportunityStageTriggerHandler {
             newContract.Region__c = accounts.get(opp.AccountId).Region__c;
             newContract.Opportunity__c = opp.Id;
             
-            List<Sales_Order__c> relatedOrders = oppToSalesOrders.get(opp.Id);
+            List<Sales_Order__c> relatedOrders = new List<Sales_Order__c>();
+            relatedOrders = oppToSalesOrders.get(opp.Id);
             newContract.Total_Sales_Orders__c = relatedOrders.size();
             
             Integer totalItems = 0;
@@ -122,6 +128,7 @@ public class OpportunityStageTriggerHandler {
             for (Sales_Order__c order : relatedOrders) {
                 totalItems += order.Total_Devices__c != null ? order.Total_Devices__c.intValue() : 0;
                 totalAmount += order.Total_Amount__c != null ? order.Total_Amount__c : 0;
+                salesOrderToContractMap.put(order, newContract);
             }
             
             newContract.Total_Sales_Order_Items__c = totalItems;
@@ -134,6 +141,11 @@ public class OpportunityStageTriggerHandler {
         
         try {
             insert contractsToInsert;
+            for(Sales_Order__c order : salesOrderToContractMap.keySet()) {
+                order.Devices_Contract__c = salesOrderToContractMap.get(order).Id;
+                ordersToUpdate.add(order);
+            }
+            update ordersToUpdate;
             System.debug('Created Contracts: ' + contractsToInsert);
         } catch (DmlException e) {
             System.debug('Error creating Contracts: ' + e.getMessage());
@@ -143,78 +155,74 @@ public class OpportunityStageTriggerHandler {
     //in dev
     private static void updateDeviceOrderItems(List<SObject> newOpps) {
         Id soldRecordTypeId = Schema.SObjectType.Device__c.getRecordTypeInfosByDeveloperName().get('Sold').getRecordTypeId();
-
+        
+        System.debug('Updating device order items...');
+        
         List<Sales_Order__c> salesOrders = [
             SELECT Id
             FROM Sales_Order__c
             WHERE Opportunity__c IN :newOpps
         ];
-        System.debug('Sales Orders: ' + salesOrders);
-        
+    
+        System.debug('Sales Orders related to Opportunities: ' + salesOrders);
+    
         List<Sales_Order_Item__c> orderItems = [
             SELECT Id, Sales_Order__c, Device__c
             FROM Sales_Order_Item__c
             WHERE Sales_Order__c IN :salesOrders
-            AND Device__c != null 
+            AND Device__c != null
         ];
-
+    
         System.debug('Order Items: ' + orderItems);
-
+    
         Set<Id> deviceIds = new Set<Id>();
         for (Sales_Order_Item__c orderItem : orderItems) {
             deviceIds.add(orderItem.Device__c);
         }
-        
+    
         System.debug('Device IDs: ' + deviceIds);
-
-
-        Map<Id, Devices_Contract__c> salesOrderToContractMap = new Map<Id, Devices_Contract__c>([
-            SELECT Id, Sales_Order__c, Opportunity__c, Account__c,
-            Account__r.ShippingStreet, Account__r.ShippingCity, Account__r.ShippingPostalCode
-            FROM Devices_Contract__c 
-            WHERE Sales_Order__c IN :salesOrders]
-        );
-        
-        System.debug('Sales Order to Contract Map: ' + salesOrderToContractMap);
-
+    
         List<Device__c> devicesToUpdate = [
-            SELECT Id, Devices_Contract__c, Account__c, Status__c, RecordTypeId, Address_to_Deliver__c
+            SELECT Id, Devices_Contract__r.Account__r.ShippingStreet, Devices_Contract__r.Account__c, Status__c, RecordTypeId
             FROM Device__c
             WHERE Id IN :deviceIds
         ];
-        
-        System.debug('Devices to Update: ' + devicesToUpdate);
-        
-        for (Sales_Order_Item__c orderItem : orderItems) {
-            Devices_Contract__c contractDevice = salesOrderToContractMap.get(orderItem.Sales_Order__c);
-            
-            if (contractDevice != null && orderItem.Device__c != null) {
-               
-                System.debug('IN IF contract != null');
-                for (Device__c device : devicesToUpdate) {
-                    if (device.Id == orderItem.Device__c) {
-                        device.Devices_Contract__c = contractDevice.Id;
-                        device.Account__c = contractDevice.Account__c;
-                        device.Status__c = 'Sold';
-                        device.RecordTypeId = soldRecordTypeId;
-                        device.Address_to_Deliver__Street__s = contractDevice.Account__r.ShippingStreet;
-                        device.Address_to_Deliver__City__s = contractDevice.Account__r.ShippingCity;
-                        device.Address_to_Deliver__PostalCode__s = contractDevice.Account__r.ShippingPostalCode;
-                    }
-                }
-            }  
-        }
 
         System.debug('Devices to Update: ' + devicesToUpdate);
-        if (!devicesToUpdate.isEmpty()) { 
+
+        List<Devices_Contract__c> contracts = [
+            SELECT Id, Account__c, Region__c
+            FROM Devices_Contract__c
+            WHERE Account__c IN :deviceIds
+        ];
+
+        System.debug('CONTRACTS: ' + contracts);
+        
+        Set<Device__c> deviceSetToUpdate = new Set<Device__c>();
+        for (Sales_Order_Item__c orderItem : orderItems) {
+            for (Device__c device : devicesToUpdate) {
+                if (device.Id == orderItem.Device__c) {
+
+                    system.debug('Device found: ' + device);
+                    device.Status__c = 'Sold';
+                    device.RecordTypeId = soldRecordTypeId;
+                    device.Account__c = device.Devices_Contract__r.Account__c;
+                    device.Address_to_Deliver__Street__s = device.Devices_Contract__r.Account__r.ShippingStreet;
+                    deviceSetToUpdate.add(device);
+                    system.debug('DEVICE UPDATED!: ' + device); 
+                }
+            }
+        }
+    
+        if (!deviceSetToUpdate.isEmpty()) { 
             try {
-                update devicesToUpdate;
-                System.debug('Updated Device Order Items: ' + devicesToUpdate);
+                update new List<Device__c>(deviceSetToUpdate);
+                System.debug('Updated Device Order Items: ' + deviceSetToUpdate);
             } catch (DmlException e) {
-            System.debug('Error updating Device Order Items: ' + e.getMessage());
+                System.debug('Error updating Device Order Items: ' + e.getMessage());
             }
         } else {
             System.debug('No Device Order Items found for update.');
         }
-    }     
+    }
 } 

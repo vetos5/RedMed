@@ -1,5 +1,5 @@
-@isTest
-public class TestDataFactory {
+ @isTest
+ public class TestDataFactory {
     public static Account createAccountTest(String name, String recordTypeName, Boolean isInsert) {
         Account acc = new Account(
         RecordTypeId = '012d2000000r7jJAAQ',       

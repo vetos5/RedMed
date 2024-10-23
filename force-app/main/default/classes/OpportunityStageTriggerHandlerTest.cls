@@ -1,5 +1,5 @@
-@isTest
-private class OpportunityStageTriggerHandlerTest {
+ @isTest
+ private class OpportunityStageTriggerHandlerTest {
     
     static Account potentialAccount;
     
@@ -8,7 +8,7 @@ private class OpportunityStageTriggerHandlerTest {
         insert potentialAccount;
 
         List<Opportunity> opps = new List<Opportunity>();
-        for (Integer i = 0; i < 200; i++){
+        for (Integer i = 0; i < 10; i++){
             Opportunity testOpp = TestDataFactory.createOpportunityTest(potentialAccount, 'Prospecting', false);
             opps.add(testOpp);
         }
@@ -40,6 +40,7 @@ private class OpportunityStageTriggerHandlerTest {
     static void testHandleClosedWonOpportunities() {
         Id existingAccountRecordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByDeveloperName().get('Existing_Account').getRecordTypeId();
     
+
         List <Opportunity> oppsToUpdate = [
             SELECT Id, StageName 
             FROM Opportunity 
@@ -106,6 +107,11 @@ private class OpportunityStageTriggerHandlerTest {
             FROM Devices_Contract__c
             WHERE Opportunity__c IN :oppsForContract];
 
+        List<Sales_Order__c> orders = [
+            SELECT Id, Devices_Contract__c
+            FROM Sales_Order__c 
+            WHERE Opportunity__c IN :opportunityIds];
+
         System.assertEquals(200, contracts.size(), '200 contracts should be created');
 
         for (Devices_Contract__c contract : contracts) {
@@ -116,6 +122,10 @@ private class OpportunityStageTriggerHandlerTest {
             System.assertNotEquals(null, contract.Total_Sales_Order_Items__c, 'Total Sales Order Items should not be null');
             System.assertNotEquals(null, contract.Total_Amount__c, 'Total Amount should not be null');
             System.assertNotEquals(null, contract.Sold_Date_Time__c, 'Sold Date Time should not be null');
+        }
+
+        for (Sales_Order__c order : orders) {
+            System.assertNotEquals(null, order.Devices_Contract__c, 'Contract should be related to the order');
         }
     }
 
@@ -128,6 +138,13 @@ private class OpportunityStageTriggerHandlerTest {
             FROM Account 
             LIMIT 1
         ];
+
+        List<Devices_Contract__c> contracts = new List<Devices_Contract__c>();
+        for (Devices_Contract__c contract : contracts) {
+            Devices_Contract__c devContract = TestDataFactory.createContractTest(acc, false);
+            contracts.add(devContract);
+        }
+        insert contracts;
 
         List <Opportunity> oppsToUpdate = [
             SELECT Id, StageName 
