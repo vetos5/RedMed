@@ -152,77 +152,96 @@ public class OpportunityStageTriggerHandler {
         }
     }
     
-    //in dev
     private static void updateDeviceOrderItems(List<SObject> newOpps) {
+        System.debug('Updating Device Order Items');
+    
         Id soldRecordTypeId = Schema.SObjectType.Device__c.getRecordTypeInfosByDeveloperName().get('Sold').getRecordTypeId();
+           
+        Map<Id, Id> opportunityToAccountMap = new Map<Id, Id>();
+        for (SObject s : newOpps) {
+            Opportunity opp = (Opportunity)s;
+            if (opp.StageName == 'Closed Won') {
+                opportunityToAccountMap.put(opp.Id, opp.AccountId);
+            }
+        }
         
-        System.debug('Updating device order items...');
-        
-        List<Sales_Order__c> salesOrders = [
-            SELECT Id
-            FROM Sales_Order__c
-            WHERE Opportunity__c IN :newOpps
-        ];
-    
-        System.debug('Sales Orders related to Opportunities: ' + salesOrders);
-    
         List<Sales_Order_Item__c> orderItems = [
-            SELECT Id, Sales_Order__c, Device__c
-            FROM Sales_Order_Item__c
-            WHERE Sales_Order__c IN :salesOrders
-            AND Device__c != null
+            SELECT Id, Device__c, Sales_Order__r.Opportunity__c, Sales_Order__r.Devices_Contract__c 
+            FROM Sales_Order_Item__c 
+            WHERE Sales_Order__r.Opportunity__c IN :opportunityToAccountMap.keySet()
         ];
-    
-        System.debug('Order Items: ' + orderItems);
     
         Set<Id> deviceIds = new Set<Id>();
-        for (Sales_Order_Item__c orderItem : orderItems) {
-            deviceIds.add(orderItem.Device__c);
+        for (Sales_Order_Item__c item : orderItems) {
+            deviceIds.add(item.Device__c);
         }
-    
-        System.debug('Device IDs: ' + deviceIds);
     
         List<Device__c> devicesToUpdate = [
-            SELECT Id, Devices_Contract__r.Account__r.ShippingStreet, Devices_Contract__r.Account__c, Status__c, RecordTypeId
-            FROM Device__c
+            SELECT Id, RecordTypeId, Status__c, Account__c, Address_To_Deliver__c 
+            FROM Device__c 
             WHERE Id IN :deviceIds
         ];
+    
+        List<Device__c> updatedDevices = new List<Device__c>();
+        Map<Id, Opportunity> opportunityMap = new Map<Id, Opportunity>();
+    
+        Set<Id> opportunityIds = new Set<Id>();
+        for (Sales_Order_Item__c item : orderItems) {
+            if (item.Sales_Order__r.Opportunity__c != null) {
+                opportunityIds.add(item.Sales_Order__r.Opportunity__c);
+            }
+        }
 
-        System.debug('Devices to Update: ' + devicesToUpdate);
+        if (!opportunityIds.isEmpty()) {
+            List<Opportunity> relatedOpps = [
+                SELECT Id, Account.Id, Account.ShippingStreet, Account.ShippingCity, Account.ShippingState, Account.ShippingPostalCode, Account.ShippingCountry 
+                FROM Opportunity 
+                WHERE Id IN :opportunityIds
+            ];
+            for (Opportunity opp : relatedOpps) {
+                opportunityMap.put(opp.Id, opp);
+            }
+        }
 
-        List<Devices_Contract__c> contracts = [
-            SELECT Id, Account__c, Region__c
-            FROM Devices_Contract__c
-            WHERE Account__c IN :deviceIds
-        ];
+        Map<Id, Id> deviceContractMap = new Map<Id, Id>();
+            for (Sales_Order_Item__c item : orderItems) {
+            if (item.Sales_Order__r.Devices_Contract__c != null) {
+                deviceContractMap.put(item.Device__c, item.Sales_Order__r.Devices_Contract__c);
+            }
+        }
 
-        System.debug('CONTRACTS: ' + contracts);
-        
-        Set<Device__c> deviceSetToUpdate = new Set<Device__c>();
-        for (Sales_Order_Item__c orderItem : orderItems) {
-            for (Device__c device : devicesToUpdate) {
-                if (device.Id == orderItem.Device__c) {
+        for (Device__c device : devicesToUpdate) {
+             device.Status__c = 'Sold'; 
+            device.RecordTypeId = soldRecordTypeId;
 
-                    system.debug('Device found: ' + device);
-                    device.Status__c = 'Sold';
-                    device.RecordTypeId = soldRecordTypeId;
-                    device.Account__c = device.Devices_Contract__r.Account__c;
-                    device.Address_to_Deliver__Street__s = device.Devices_Contract__r.Account__r.ShippingStreet;
-                    deviceSetToUpdate.add(device);
-                    system.debug('DEVICE UPDATED!: ' + device); 
+            if (deviceContractMap.containsKey(device.Id)) {
+                device.Devices_Contract__c = deviceContractMap.get(device.Id);
+            }
+    
+            for (Sales_Order_Item__c item : orderItems) {
+                if (item.Device__c == device.Id) {
+                    device.Account__c = opportunityToAccountMap.get(item.Sales_Order__r.Opportunity__c);
+                    if (opportunityMap.containsKey(item.Sales_Order__r.Opportunity__c)) {
+                        Opportunity relatedOpp = opportunityMap.get(item.Sales_Order__r.Opportunity__c);
+                        device.Address_to_Deliver__Street__s = relatedOpp.Account.ShippingStreet; 
+                        device.Address_to_Deliver__City__s = relatedOpp.Account.ShippingCity;
+                        device.Address_to_Deliver__PostalCode__s = relatedOpp.Account.ShippingPostalCode;  
+                    }
+                    break; 
                 }
             }
+            updatedDevices.add(device);
         }
-    
-        if (!deviceSetToUpdate.isEmpty()) { 
+
+        if (!updatedDevices.isEmpty()) {
             try {
-                update new List<Device__c>(deviceSetToUpdate);
-                System.debug('Updated Device Order Items: ' + deviceSetToUpdate);
+                update updatedDevices;
+                System.debug('Updated Devices: ' + updatedDevices);
             } catch (DmlException e) {
-                System.debug('Error updating Device Order Items: ' + e.getMessage());
+                System.debug('Error updating Devices: ' + e.getMessage());
             }
         } else {
-            System.debug('No Device Order Items found for update.');
+            System.debug('No Devices to update.');
         }
     }
-} 
+}   

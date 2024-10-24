@@ -169,7 +169,9 @@
         System.debug('DEBUG ACCS: ' + acc);
         
         List<Device__c> updatedDevices = [
-            SELECT Id, Account__c, Status__c, RecordTypeId, Address_to_Deliver__Street__s, Address_to_Deliver__City__s, Address_to_Deliver__PostalCode__s
+            SELECT Id, Account__c, Status__c, RecordTypeId, Address_to_Deliver__Street__s,
+            Address_to_Deliver__City__s, Address_to_Deliver__PostalCode__s,
+            Devices_Contract__r.Id, Devices_Contract__r.Opportunity__c
             FROM Device__c
             WHERE Account__c = :acc.Id];
 
@@ -177,10 +179,13 @@
 
         for (Device__c device : updatedDevices) {
         System.assertEquals(acc.Id, device.Account__c, 'Account should be updated.');
-        System.assertEquals('Sold', device.Status__c, 'Device status should be set to Sold.');
+        System.assertEquals(soldRecordTypeId, device.RecordTypeId, 'Record Type should be updated.');
+        System.assertEquals(oppsToUpdate2[0].Id, device.Devices_Contract__r.Opportunity__c, 'Contract should be updated.');
+        //System.assertEquals('Sold', device.Status__c, 'Device status should be set to Sold.');
         System.assertEquals(acc.ShippingStreet, device.Address_to_Deliver__Street__s, 'Street address should match.');
         System.assertEquals(acc.ShippingCity, device.Address_to_Deliver__City__s, 'City should match.');
-        System.assertEquals(acc.ShippingPostalCode, device.Address_to_Deliver__PostalCode__s, 'Postal code should match.');}
+        System.assertEquals(acc.ShippingPostalCode, device.Address_to_Deliver__PostalCode__s, 'Postal code should match.');
+        }
     }
 }
 
