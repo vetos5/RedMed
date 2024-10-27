@@ -1,0 +1,21 @@
+<aura:component controller="ShowSOandSOIcontroller" implements="flexipage:availableForAllPageTypes" access = 'global'>
+    <aura:attribute name="salesOrders" type="List" />
+    
+    <div>
+        <aura:iteration items="{!v.salesOrders}" var="order">
+            <div class="sales-order-box" data-order-id="{!order.Id}" onclick="{!c.navigateToOrder}">
+                <p>{!order.Name}</p>
+                <div>
+                    <aura:iteration items="{!order.Sales_Order_Items__r}" var="item">
+                        <div class="sales-order-item-box" data-item-id="{!item.Id}" onclick="{!c.navigateToItem}">
+                            <p>{!item.Name}</p>
+                            <p>Amount: {!item.Amount__c}</p>
+                            <p>Discount: {!item.Discount__c}</p>
+                            <p>Final Amount: {!item.Final_Amount__c}</p>
+                        </div>
+                    </aura:iteration>
+                </div>
+            </div>
+        </aura:iteration>
+    </div>
+</aura:component>

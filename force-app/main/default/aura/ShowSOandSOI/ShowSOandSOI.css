@@ -1,0 +1,16 @@
+.THIS .sales-order-container {
+    display: flex;
+    flex-direction: column;
+    margin: 20px;
+}
+
+.THIS .sales-order-box, .THIS .order-item-box {
+    border: 1px solid #d8dde6;
+    padding: 10px;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.THIS .sales-order-box h2, .THIS .order-item-box h3 {
+    margin: 0;
+}

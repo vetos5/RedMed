@@ -211,7 +211,7 @@ public class OpportunityStageTriggerHandler {
         }
 
         for (Device__c device : devicesToUpdate) {
-             device.Status__c = 'Sold'; 
+            device.Status__c = 'Sold'; 
             device.RecordTypeId = soldRecordTypeId;
 
             if (deviceContractMap.containsKey(device.Id)) {
