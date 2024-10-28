@@ -25,7 +25,7 @@
             var state = response.getState();
             if (state === "SUCCESS") {
                 var orders = response.getReturnValue();
-                console.log('Sales Orders:', orders); 
+                console.log('Sales Orders:', orders); // Log the fetched sales orders
                 component.set("v.salesOrders", orders);
             } else {
                 console.error("Failed to fetch sales orders: ", response.getError());

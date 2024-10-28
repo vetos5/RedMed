@@ -1,0 +1,32 @@
+<template>
+    <lightning-button label="Add Order Item" onclick={handleAddOrderItem}></lightning-button>
+    <div>
+        <div>
+            <p>Discount: <lightning-input type="number" value={orderDiscount} onchange={handleOrderDiscountChange}></lightning-input></p>
+            <p>Total Amount: {totalAmount}</p>
+        </div>
+    </div>
+
+    <template for:each={orderItems} for:item="item">
+        <div key={item.deviceId}> 
+            <lightning-combobox 
+                label="Device" 
+                data-index={index} 
+                value={item.deviceId} 
+                options={availableDevices} 
+                onchange={handleDeviceChange}>
+            </lightning-combobox>
+            <lightning-input 
+                type="number" 
+                label="Discount" 
+                data-index={index} 
+                value={item.discount} 
+                onchange={handleDiscountChange}>
+            </lightning-input>
+            <p>Amount: {item.amount}</p>
+        </div>
+    </template>
+
+    <lightning-button label="Create Orders and Items" onclick={handleCreateOrder}></lightning-button>
+    <lightning-button label="Cancel" onclick={handleCancel}></lightning-button>
+</template>

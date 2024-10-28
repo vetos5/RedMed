@@ -1,6 +1,6 @@
-<aura:component controller="ShowSOandSOIcontroller" implements="flexipage:availableForAllPageTypes" access = 'global'>
+<aura:component controller="ShowSOandSOIcontroller" implements="flexipage:availableForAllPageTypes">
     <aura:attribute name="salesOrders" type="List" />
-    
+
     <div>
         <aura:iteration items="{!v.salesOrders}" var="order">
             <div class="sales-order-box" data-order-id="{!order.Id}" onclick="{!c.navigateToOrder}">
