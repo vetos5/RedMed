@@ -1,20 +1,47 @@
-<aura:component controller="ShowSOandSOIcontroller" implements="flexipage:availableForAllPageTypes, force:hasRecordId" >
+<aura:component controller="ShowSOandSOIcontroller" implements="flexipage:availableForAllPageTypes, force:hasRecordId">
     <aura:attribute name="salesOrders" type="List" />
     <aura:attribute name="recordId" type="String" access="public" />
+    <aura:attribute name="errorMessage" type="String"/>
+
     <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
-    <div>
+
+    <aura:if isTrue="{!not(empty(v.errorMessage))}">
+        <div class="slds-text-color_error slds-m-around_small slds-text-body_regular">
+            {!v.errorMessage}
+        </div>
+    </aura:if>
+
+    <div class="slds-box slds-box_xx-small slds-m-around_small">
         <aura:iteration items="{!v.salesOrders}" var="order">
-            <div class="sales-order-box" data-order-id="{!order.Id}" onclick="{!c.navigateToOrder}">
-                <p>{!order.Name}</p>
-                <div>
-                    <aura:iteration items="{!order.Sales_Order_Items__r}" var="item">
-                        <div class="sales-order-item-box" data-item-id="{!item.Id}" onclick="{!c.navigateToItem}">
-                            <p>{!item.Name}</p>
-                            <p>Amount: {!item.Amount__c}</p>
-                            <p>Discount: {!item.Discount__c}</p>
-                            <p>Final Amount: {!item.Final_Amount__c}</p>
+            <div class="slds-card slds-m-bottom_small">
+                <div class="slds-card__header slds-card__header_filtered" style="background-color:  #f3f3f3">
+                    <h2 class="slds-text-heading_medium">
+                        <a href="javascript:void(0);" onclick="{!c.navigateToOrder}" data-order-id="{!order.Id}">
+                            Order Name: {!order.Name}
+                        </a>
+                        <div class="slds-text-body_small slds-m-top_x-small">
+                            <p class="slds-m-left_small"><strong>Total Amount: </strong> ${!order.Total_Amount__c != null ? order.Total_Amount__c : 0}</p>
+                            <p class="slds-m-left_small"><strong>Discount: </strong> {!order.Discount__c != null ? order.Discount__c : 0}%</p>
+                            <p class="slds-m-left_small"><strong>Total Devices: </strong> {!order.Total_Devices__c != null ? order.Total_Devices__c : 0}</p>
                         </div>
-                    </aura:iteration>
+                    </h2>
+                </div>
+                <div class="slds-card__body slds-card__body_filtered">
+                    <div class="slds-border_top slds-m-top_small">
+                        <aura:iteration items="{!order.Sales_Order_Items__r}" var="item">
+                            <div class="slds-box slds-m-top_small slds-p-around_small slds-border slds-border_left slds-border_right slds-border_bottom">
+                                <p class="slds-m-left_small">
+                                    <strong>Item Name: </strong>
+                                    <a href="javascript:void(0);" onclick="{!c.navigateToItem}" data-item-id="{!item.Id}">
+                                        {!item.Name}
+                                    </a>
+                                </p>
+                                <p class="slds-m-left_small"><strong>Amount: </strong> ${!item.Amount__c != null ? item.Amount__c : 0}</p>
+                                <p class="slds-m-left_small"><strong>Discount: </strong> {!item.Discount__c != null ? item.Discount__c : 0}%</p>
+                                <p class="slds-m-left_small"><strong>Final Amount: </strong> ${!item.Final_Amount__c != null ? item.Final_Amount__c : 0}</p>
+                            </div>
+                        </aura:iteration>
+                    </div>
                 </div>
             </div>
         </aura:iteration>

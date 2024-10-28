@@ -1,7 +1,4 @@
 ({
-    doInit : function(component, event, helper) {
-        helper.fetchSalesOrders(component);
-    },
     
     navigateToOrder : function(component, event, helper) {
         var orderId = event.currentTarget.dataset.orderId;
