@@ -2,6 +2,8 @@
     <aura:attribute name="salesOrders" type="List" />
     <aura:attribute name="recordId" type="String" access="public" />
     <aura:attribute name="errorMessage" type="String"/>
+    <aura:attribute name="currentPage" type="Integer" default="1"/>
+    <aura:attribute name="pageSize" type="Integer" default="2"/>
 
     <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
 
@@ -46,4 +48,5 @@
             </div>
         </aura:iteration>
     </div>
+
 </aura:component>

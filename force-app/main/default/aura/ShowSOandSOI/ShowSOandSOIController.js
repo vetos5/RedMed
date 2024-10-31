@@ -10,4 +10,5 @@
     navigateToItem : function(component, event, helper) {
         helper.navigateToItem(component, event);
     },
+
 })

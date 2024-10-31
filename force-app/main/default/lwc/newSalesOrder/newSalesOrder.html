@@ -2,12 +2,20 @@
     <lightning-button label="Add Order Item" onclick={handleAddOrderItem}></lightning-button>
     <div>
         <div>
-            <p>Discount: <lightning-input type="number" value={orderDiscount} onchange={handleOrderDiscountChange}></lightning-input></p>
+            <p>Discount: 
+                <lightning-input 
+                    type="number" 
+                    value={orderDiscount} 
+                    onchange={handleOrderDiscountChange} 
+                    max="99"
+                    message-when-range-overflow="Discount cannot exceed 99%">
+                </lightning-input>
+            </p>
             <p>Total Amount: {totalAmount}</p>
         </div>
     </div>
 
-    <template for:each={orderItems} for:item="item">
+    <template for:each={orderItems} for:item="item" for:index="index">
         <div key={item.deviceId}> 
             <lightning-combobox 
                 label="Device" 
@@ -21,7 +29,9 @@
                 label="Discount" 
                 data-index={index} 
                 value={item.discount} 
-                onchange={handleDiscountChange}>
+                onchange={handleDiscountChange}
+                max="99"
+                message-when-range-overflow="Discount cannot exceed 99%">
             </lightning-input>
             <p>Amount: {item.amount}</p>
         </div>
