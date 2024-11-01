@@ -34,6 +34,7 @@ export default class SalesOrder extends LightningElement {
         const device = this.availableDevices.find(dev => dev.value === deviceId);
         this.orderItems[index] = { ...this.orderItems[index], deviceId, price: device.price };
         this.calculateAmount(index);
+        // this.handleAddOrderItem();
     }
 
     handleDiscountChange(event) {
@@ -41,6 +42,12 @@ export default class SalesOrder extends LightningElement {
         const discount = Math.min(event.detail.value, 99); 
         this.orderItems[index].discount = discount;
         this.calculateAmount(index);
+    }
+
+    handleDiscountChangeTotal(event){
+        const discount = Math.min(event.detail.value, 99);
+        this.orderDiscount = discount;
+        this.calculateTotal();
     }
 
     calculateAmount(index) {
