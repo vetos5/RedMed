@@ -9,17 +9,23 @@ export default class SalesOrder extends LightningElement {
     orderItems = [];
     orderDiscount = 0;
     totalAmount = 0;
-    price = 0;
-    
+    isNewSalesOrderVisible = false;
+
     connectedCallback() {
         this.fetchDevices();
     }
 
+    handleNewSalesOrderClick() {
+        this.isNewSalesOrderVisible = !this.isNewSalesOrderVisible;
+    }
+
     fetchDevices() {
         getAvailableDevices().then(data => {
-            this.availableDevices = data.map(device => {
-                return { label: device.Name, value: device.Id, price: device.Default_Price__c };
-            });
+            this.availableDevices = data
+                .filter(device => !this.orderItems.some(item => item.deviceId === device.Id))
+                .map(device => {
+                    return { label: device.Name, value: device.Id, price: device.Default_Price__c };
+                });
         }).catch(error => {
             this.showToast('Error', 'Failed to fetch devices', 'error');
         });
@@ -27,17 +33,22 @@ export default class SalesOrder extends LightningElement {
 
     handleAddOrderItem(deviceId, devicePrice, deviceName) {
         this.orderItems = [...this.orderItems, { deviceId: deviceId, deviceName: deviceName, discount: 0, amount: devicePrice }];
+        this.fetchDevices(); 
     }
 
     handleDeviceChange(event) {
         const deviceId = event.detail.value;
         const device = this.availableDevices.find(dev => dev.value === deviceId);
-        this.handleAddOrderItem(deviceId, device.price, device.label);
-        this.calculateTotal();
+
+        if (!this.orderItems.some(item => item.deviceId === deviceId)) {
+            this.handleAddOrderItem(deviceId, device.price, device.label);
+            this.calculateTotal();
+        } else {
+            this.showToast('Error', 'This device has already been selected', 'error');
+        }
     }
 
     handleDiscountChange(event) {
-        console.log('Discount change started');
         const index = event.target.dataset.index;
         const discount = Math.min(event.detail.value, 99); 
         this.orderItems[index].discount = discount;
@@ -69,7 +80,7 @@ export default class SalesOrder extends LightningElement {
 
         const items = this.orderItems.map(item => ({
             deviceId: item.deviceId,
-            price: item.price,
+            price: item.amount, 
             discount: item.discount
         }));
 
@@ -79,6 +90,7 @@ export default class SalesOrder extends LightningElement {
             items: items 
         }).then(() => {
             this.showToast('Success', 'Sales Order created successfully', 'success');
+            this.handleCancel(); 
         }).catch(error => {
             this.showToast('Error', 'Failed to create Sales Order', 'error');
         });
@@ -88,6 +100,7 @@ export default class SalesOrder extends LightningElement {
         this.orderItems = []; 
         this.orderDiscount = 0;
         this.totalAmount = 0;
+        this.fetchDevices(); 
     }
 
     showToast(title, message, variant) {

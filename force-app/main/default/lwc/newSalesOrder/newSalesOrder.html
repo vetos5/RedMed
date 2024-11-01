@@ -1,19 +1,24 @@
 <template>
-    <div class="slds-card slds-p-around_medium slds-m-around_medium">
-        <header class="slds-card__header slds-grid">
-            <div class="slds-media slds-media_center slds-has-flexi-truncate">
-                <div class="slds-media__body">
-                    <h2 class="slds-text-heading_small">New Sales Order</h2>
-                </div>
-            </div>
-        </header>
+    <div class="slds-grid slds-grid_align-spread">
+        <lightning-button label="New Sales Order" onclick={handleNewSalesOrderClick}></lightning-button>
+    </div>
 
-        <div class="slds-card__body slds-p-horizontal_small">
-            <div class="slds-grid slds-wrap slds-gutters">
-                <div class="slds-col slds-size_1-of-2">
-                    <div class="slds-p-around_small">
-                        <p class="slds-text-heading_small">Discount:</p>
+    <template if:true={isNewSalesOrderVisible}>
+        <div class="slds-card slds-p-around_medium slds-m-around_medium">
+            <header class="slds-card__header slds-grid">
+                <div class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__body">
+                        <h2 class="slds-text-heading_small">Sales Order</h2>
+                    </div>
+                </div>
+            </header>
+
+            <div class="slds-card__body slds-p-horizontal_small">
+                <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_small">
+                    <div class="slds-col slds-size_1-of-2 slds-p-around_small" style="border-right: 1px solid #d8dde6;">
+                        <p class="slds-text-heading_small">Discount</p>
                         <lightning-input 
+                            label="Input Discount:" 
                             type="number" 
                             value={orderDiscount} 
                             class="slds-m-bottom_small"
@@ -21,46 +26,53 @@
                             max="99"
                             message-when-range-overflow="Discount cannot exceed 99%">
                         </lightning-input>
-                    </div>
-                    <div class="slds-p-around_small">
                         <p class="slds-text-heading_small">Total Amount: {totalAmount}</p>
                     </div>
-                </div>
-                
-            </div>
 
-            
-            <div class="slds-m-top_medium">
-                <lightning-combobox 
-                            label="Device" 
+                    <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                        <p class="slds-text-heading_small">Add Order Item</p>
+                        <lightning-combobox 
+                            label="Select Device:" 
                             options={availableDevices} 
-                            class="slds-m-bottom_small"
                             onchange={handleDeviceChange}
                             placeholder="Select Device">
                         </lightning-combobox>
-
-                <template for:each={orderItems} for:item="item" for:index="index">
-                    <div key={item.deviceId} class="slds-box slds-m-around_xx-small slds-p-around_xx-small">
-                        <p>Device Name: {item.deviceName}</p>
-                        <lightning-input 
-                            type="number" 
-                            label="Discount" 
-                            data-index={index} 
-                            value={item.discount} 
-                            class="slds-m-bottom_small"
-                            onchange={handleDiscountChange}
-                            max="99"
-                            message-when-range-overflow="Discount cannot exceed 99%">
-                        </lightning-input>
-                        <p class="slds-text-body_small">Amount: {item.amount}</p>
                     </div>
-                </template>
-            </div>
-        </div>
+                </div>
 
-        <footer class="slds-card__footer slds-grid slds-grid_align-space">
-            <lightning-button label="Create Orders and Items" variant="success" onclick={handleCreateOrder}></lightning-button>
-            <lightning-button label="Cancel" variant="neutral" onclick={handleCancel}></lightning-button>
-        </footer>
-    </div>
+                
+
+                <div class="slds-m-top_medium">
+                    <template for:each={orderItems} for:item="item" for:index="index">
+                        <div key={item.deviceId} class="slds-grid slds-wrap slds-m-around_xx-small slds-p-around_xx-small">
+                            <div class="slds-col slds-size_1-of-3">
+                                <p>Device Name: {item.deviceName}</p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <lightning-input 
+                                    type="number" 
+                                    label="Discount" 
+                                    data-index={index} 
+                                    value={item.discount} 
+                                    class="slds-m-bottom_small"
+                                    onchange={handleDiscountChange}
+                                    max="99"
+                                    message-when-range-overflow="Discount cannot exceed 99%">
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 slds-p-left_small">
+                                <p class="slds-text-body_small slds-m-bottom_xx-small">Amount:</p>
+                                <p class="slds-text-body_small slds-text-bold">{item.amount}</p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <footer class="slds-card__footer slds-grid slds-grid_align-space">
+                <lightning-button label="Create Orders and Items" variant="success" onclick={handleCreateOrder}></lightning-button>
+                <lightning-button label="Cancel" variant="neutral" onclick={handleCancel}></lightning-button>
+            </footer>
+        </div>
+    </template>
 </template>
