@@ -1,18 +1,18 @@
 public with sharing class newSalesOrderController {
     @AuraEnabled(cacheable=true)
     public static List<Device__c> getAvailableDevices() {
-        return [SELECT Id, Name, Default_Price__c FROM Device__c WHERE Status__c = 'In Stock'];
+        return [SELECT Id, Name, Default_Price__c FROM Device__c WHERE Status__c = 'In Stock' AND Order_Is_Pending__c = false];
     }
 
     @AuraEnabled
     public static void createSalesOrderAndItems(Id opportunityId, Decimal orderDiscount, List<OrderItemWrapper> items) {
-        System.debug('GOUDA' + items);
+
         Sales_Order__c salesOrder = new Sales_Order__c(
             Opportunity__c = opportunityId,
             Discount__c = orderDiscount
         );
+
         insert salesOrder;
-        System.debug('+++++++++++++++++++++++++++++++++++Sales Order created+++++++++++++++++++++++++++++++++++');
         List<Sales_Order_Item__c> orderItems = new List<Sales_Order_Item__c>();
         System.debug('Creating Sales Order Items');
         for (OrderItemWrapper item : items) {
@@ -27,7 +27,6 @@ public with sharing class newSalesOrderController {
         }
 
         insert orderItems;
-        system.debug('+++++++++++++++++++++++++++++++++++Items created+++++++++++++++++++++++++++++++++++');
     }
 
     public class OrderItemWrapper {

@@ -9,7 +9,7 @@ export default class SalesOrder extends LightningElement {
     orderItems = [];
     orderDiscount = 0;
     totalAmount = 0;
-
+    
     connectedCallback() {
         this.fetchDevices();
     }
@@ -55,6 +55,11 @@ export default class SalesOrder extends LightningElement {
     }
 
     handleCreateOrder() {
+        if (this.orderItems.length === 0) {
+            this.showToast('Error', 'Cannot create Sales Order without items', 'error');
+            return 1;
+        }
+
         const items = this.orderItems.map(item => ({
             deviceId: item.deviceId,
             price: item.price,
@@ -70,6 +75,12 @@ export default class SalesOrder extends LightningElement {
         }).catch(error => {
             this.showToast('Error', 'Failed to create Sales Order', 'error');
         });
+    }
+
+    handleCancel() {
+        this.orderItems = []; 
+        this.orderDiscount = 0;
+        this.totalAmount = 0;
     }
 
     showToast(title, message, variant) {
