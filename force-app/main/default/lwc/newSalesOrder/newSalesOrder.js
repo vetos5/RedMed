@@ -9,6 +9,7 @@ export default class SalesOrder extends LightningElement {
     orderItems = [];
     orderDiscount = 0;
     totalAmount = 0;
+    price = 0;
     
     connectedCallback() {
         this.fetchDevices();
@@ -24,20 +25,22 @@ export default class SalesOrder extends LightningElement {
         });
     }
 
-    handleAddOrderItem() {
-        this.orderItems = [...this.orderItems, { deviceId: '', discount: 0, amount: 0 }];
+    handleAddOrderItem(deviceId, devicePrice, deviceName) {
+        this.orderItems = [...this.orderItems, { deviceId: deviceId, deviceName: deviceName, discount: 0, amount: devicePrice }];
     }
 
     handleDeviceChange(event) {
-        const index = event.target.dataset.index;
+        //const index = event.target.dataset.index;
         const deviceId = event.detail.value;
         const device = this.availableDevices.find(dev => dev.value === deviceId);
-        this.orderItems[index] = { ...this.orderItems[index], deviceId, price: device.price };
-        this.calculateAmount(index);
-        // this.handleAddOrderItem();
+        //this.orderItems[index] = { ...this.orderItems[index], deviceId, price: device.price };
+       // this.calculateAmount();
+        this.handleAddOrderItem(deviceId, device.price, device.label);
+        this.calculateTotal();
     }
 
     handleDiscountChange(event) {
+        console.log('Discount change started');
         const index = event.target.dataset.index;
         const discount = Math.min(event.detail.value, 99); 
         this.orderItems[index].discount = discount;
@@ -53,7 +56,7 @@ export default class SalesOrder extends LightningElement {
     calculateAmount(index) {
         const item = this.orderItems[index];
         const discountFactor = (100 - item.discount) / 100;
-        item.amount = item.price * discountFactor;
+        item.amount = item.amount * discountFactor;
         this.calculateTotal();
     }
 

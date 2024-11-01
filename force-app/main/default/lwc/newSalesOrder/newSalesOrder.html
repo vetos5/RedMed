@@ -26,26 +26,22 @@
                         <p class="slds-text-heading_small">Total Amount: {totalAmount}</p>
                     </div>
                 </div>
-                <div class="slds-col slds-size_1-of-2 slds-text-align_right">
-                    <lightning-button 
-                        label="Add Order Item" 
-                        variant="brand" 
-                        class="slds-m-bottom_small slds-m-top_medium"
-                        onclick={handleAddOrderItem}>
-                    </lightning-button>
-                </div>
+                
             </div>
 
+            
             <div class="slds-m-top_medium">
-                <template for:each={orderItems} for:item="item" for:index="index">
-                    <div key={item.deviceId} class="slds-box slds-m-around_xx-small slds-p-around_xx-small">
-                        <lightning-combobox 
+                <lightning-combobox 
                             label="Device" 
-                            data-index={index} 
                             options={availableDevices} 
                             class="slds-m-bottom_small"
-                            onchange={handleDeviceChange}>
+                            onchange={handleDeviceChange}
+                            placeholder="Select Device">
                         </lightning-combobox>
+
+                <template for:each={orderItems} for:item="item" for:index="index">
+                    <div key={item.deviceId} class="slds-box slds-m-around_xx-small slds-p-around_xx-small">
+                        <p>Device Name: {item.deviceName}</p>
                         <lightning-input 
                             type="number" 
                             label="Discount" 
