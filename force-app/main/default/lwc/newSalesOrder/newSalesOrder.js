@@ -30,11 +30,8 @@ export default class SalesOrder extends LightningElement {
     }
 
     handleDeviceChange(event) {
-        //const index = event.target.dataset.index;
         const deviceId = event.detail.value;
         const device = this.availableDevices.find(dev => dev.value === deviceId);
-        //this.orderItems[index] = { ...this.orderItems[index], deviceId, price: device.price };
-       // this.calculateAmount();
         this.handleAddOrderItem(deviceId, device.price, device.label);
         this.calculateTotal();
     }
