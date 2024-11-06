@@ -1,0 +1,28 @@
+<template>
+    <lightning-card title="Select a Device">
+        <div class="slds-p-around_small">
+            <lightning-record-picker
+            label="Choose a Record"
+            placeholder="Start typing 'D'..."
+            object-api-name="Device__c"
+            value={deviceId}
+            onchange={handleRecordChange}
+            size="large"
+            icon-name="standard:checkout"
+            filter={filter}>
+            </lightning-record-picker>
+        </div>
+  
+  
+        <template if:true={device.data}>
+            <div class="slds-m-top_small">
+                <lightning-card title="Selected Device">
+                    <div class="slds-p-around_small">
+                        <p><strong>Name:</strong> {device.data.fields.Name__c.value}</p>
+                        <p><strong>Price:</strong> {device.data.fields.Default_Price__c.value}</p>
+                    </div>
+                </lightning-card>
+            </div>
+        </template>
+    </lightning-card>
+ </template>

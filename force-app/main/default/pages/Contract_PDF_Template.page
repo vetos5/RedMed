@@ -1,0 +1,119 @@
+<apex:page standardController="Devices_Contract__c" extensions="ContractController" contentType="pdf" renderAs="pdf">
+    <head>
+        <style>
+            @font-face {
+                font-family: 'Montserrat';
+                src: url('{!URLFOR($Resource.MontserratRegular)}') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+
+            @font-face {
+                font-family: 'Montserrat';
+                src: url('{!URLFOR($Resource.MontserratBold)}') format('truetype');
+                font-weight: bold;
+                font-style: normal;
+            }
+
+            body {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 16px;
+                line-height: 1.5;
+                letter-spacing: 2px;
+                margin: 0; 
+            }
+
+            header {
+                width: 100%;
+            }
+            
+            .header-table {
+                width: 100%;
+                border-collapse: collapse; 
+            }
+
+            .logo {
+                width: 65%; 
+                vertical-align: middle; 
+            }
+
+            .header-text {
+                width: 35%; 
+                font-weight: bold;
+                text-align: right; 
+                vertical-align: middle;
+            }
+
+            h4 {
+                margin-top: 10px;
+                margin-bottom: 5px;
+            }
+
+            .signature {
+                margin-top: 0px;
+            }
+            
+            section {
+                margin-top: 20px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <header>
+            <table class="header-table">
+                <tr>
+                    <td class="logo">
+                        <img src="{!URLFOR($Resource.RedMed_Logo)}" alt="RedMed Logo" style="max-width: 100%; height: auto;"/>
+                    </td>
+                    <td class="header-text">
+                        <b>CONTRACT FOR SALE<br />OF MEDICAL DEVICES</b>
+                    </td>
+                </tr>
+            </table>
+        </header>
+        
+        <section>
+            <p>
+                <b>This Contract</b> is created on <b>{!TEXT(TODAY())}</b> between the following parties:
+            </p>
+            
+            <p>
+                <b>RedMed Ukraine</b>, a company duly organized and existing under the laws of Ukraine, with its principal place of business at <b>{!redMedAddress}</b>, from now on referred to as the "Seller," and <b>{!buyerName}</b>, a company/hospital/organization duly organized and existing under the laws of <b>{!buyerShippingCountry}</b>, with its principal place of business at <b>{!buyerShippingStreet}, {!buyerShippingCity}, {!buyerShippingPostalCode}</b>, from now on referred to as the "Buyer."
+            </p>
+            
+            <p>The parties agree as follows:</p>
+        </section>
+        
+        <section>
+            <h4>1. Subject of the Contract</h4>
+            <span>The Seller agrees to sell, and the Buyer agrees to purchase the following medical devices:</span>
+            <ul>
+                <apex:repeat value="{!devices}" var="device">
+                    <li><b>Device: {!device.Name__c}</b> - Serial Number: <b>{!device.Name}</b> - <b>{!device.Default_Price__c}</b></li>
+                </apex:repeat>
+            </ul>
+        </section>
+        
+        <br /><br />
+        
+        <section>
+            <h4>2. Purchase Price</h4>
+            <span>The total price for the medical devices listed above shall be <b>{!contract.Total_Amount__c}</b>, inclusive of all applicable taxes and duties. Payment shall be made in accordance with the terms set out in Section 3 below.</span>
+        </section>
+        <section class="signature">
+            <h5>SELLER:</h5>
+            <span>RedMed Ukraine</span>
+            <p class="signature-info">
+                <span class="signature-cell">Signature: _______________________</span>
+                <span class="signature-cell">Date: __________________________</span>
+            </p>
+            <h5>BUYER:</h5>
+            <span>{!buyerName}</span> 
+            <p class="signature-info">
+                <span class="signature-cell">Signature: _______________________</span>
+                <span class="signature-cell">Date: __________________________</span>
+            </p>
+        </section>
+    </body>
+</apex:page>

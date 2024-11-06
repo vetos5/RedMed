@@ -1,0 +1,4 @@
+<!-- lwcGlobalActionWrapper.cmp -->
+<aura:component implements="force:lightningQuickAction" access="global">
+    <c:generateContractPDF />
+</aura:component>

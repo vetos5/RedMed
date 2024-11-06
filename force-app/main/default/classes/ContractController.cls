@@ -12,7 +12,12 @@ public with sharing class ContractController {
     public String redMedAddress { get; private set; }
 
     public ContractController(ApexPages.StandardController controller) {
-        this.contract = [SELECT Id, Account__c, Total_Amount__c FROM Devices_Contract__c WHERE Id = :controller.getId() LIMIT 1];
+        this.contract = [
+            SELECT Id, Account__c, Total_Amount__c 
+            FROM Devices_Contract__c 
+            WHERE Id = :controller.getId() 
+            LIMIT 1
+        ];
         
         Account account = [
             SELECT Name, ShippingStreet, ShippingCity, ShippingPostalCode, ShippingCountry 

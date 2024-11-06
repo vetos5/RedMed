@@ -43,20 +43,30 @@ export default class SalesOrder extends LightningElement {
         if (!this.orderItems.some(item => item.deviceId === deviceId)) {
             this.handleAddOrderItem(deviceId, device.price, device.label);
             this.calculateTotal();
-        } else {
-            this.showToast('Error', 'This device has already been selected', 'error');
         }
+        this.showToast('Error', 'This device has already been selected', 'error');
+        
     }
 
     handleDiscountChange(event) {
         const index = event.target.dataset.index;
         const discount = Math.min(event.detail.value, 99); 
+        if(discount > 99 || discount < 0){
+            this.showToast('Error', 'Discount must be between 0 and 99%', 'error');
+            return;
+        }
+
         this.orderItems[index].discount = discount;
         this.calculateAmount(index);
+        
     }
 
     handleDiscountChangeTotal(event){
         const discount = Math.min(event.detail.value, 99);
+        if(this.discount > 99 || this.discount < 0){
+            this.showToast('Error', 'Discount must be between 0 and 99%', 'error');
+            return;
+        }
         this.orderDiscount = discount;
         this.calculateTotal();
     }
@@ -70,12 +80,18 @@ export default class SalesOrder extends LightningElement {
 
     calculateTotal() {
         this.totalAmount = this.orderItems.reduce((acc, item) => acc + item.amount, 0) * (1 - this.orderDiscount / 100);
+        this.totalAmount = this.totalAmount.toFixed(2); 
     }
 
     handleCreateOrder() {
+        if (this.orderDiscount > 99 || this.orderDiscount < 0) {
+            this.showToast('Error', 'Discount must be between 0 and 99%', 'error');
+            return;
+        }
+
         if (this.orderItems.length === 0) {
             this.showToast('Error', 'Cannot create Sales Order without items', 'error');
-            return 1;
+            return;
         }
 
         const items = this.orderItems.map(item => ({
@@ -103,6 +119,17 @@ export default class SalesOrder extends LightningElement {
         this.fetchDevices(); 
     }
 
+    handleRemoveDevice(event) {
+        const deviceId = event.currentTarget.dataset.id;
+    
+        this.orderItems = this.orderItems.filter(item => item.deviceId !== deviceId);
+    
+        this.calculateTotal();
+    
+        this.fetchDevices();
+    }
+
+    
     showToast(title, message, variant) {
         this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
     }
