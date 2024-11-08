@@ -2,9 +2,10 @@
     <aura:attribute name="salesOrders" type="List" />
     <aura:attribute name="recordId" type="String" access="public" />
     <aura:attribute name="errorMessage" type="String"/>
-    <aura:attribute name="currentPage" type="Integer" default="1"/>
-    <aura:attribute name="pageSize" type="Integer" default="2"/>
-
+    <aura:attribute name="offset" type="Integer" default="0" />
+    <aura:attribute name="limit" type="Integer" default="2" />
+    <aura:attribute name="isFirstPage" type="Boolean" default="true" />
+    <aura:attribute name="isLastPage" type="Boolean" default="false" />
     <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
 
     <aura:if isTrue="{!not(empty(v.errorMessage))}">
@@ -13,7 +14,7 @@
         </div>
     </aura:if>
 
-    <div class="slds-box slds-box_xx-small slds-m-around_small">
+    <div class="slds-card slds-box_xx-small slds-m-around_small">
         <aura:iteration items="{!v.salesOrders}" var="order">
             <div class="slds-card slds-m-bottom_small">
                 <div class="slds-card__header slds-card__header_filtered" style="background-color:  #f3f3f3">
@@ -47,6 +48,10 @@
                 </div>
             </div>
         </aura:iteration>
+        <lightning:button label="Previous" onclick="{!c.handlePrevious}" disabled="{!v.isFirstPage}" />
+        <lightning:button label="Next" onclick="{!c.handleNext}" disabled="{!v.isLastPage}" />
     </div>
 
+   
 </aura:component>
+
